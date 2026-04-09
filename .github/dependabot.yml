@@ -5,19 +5,15 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
-steps:
-  - uses: actions/checkout@v4.2.2
+    # 可选：自动合并小版本更新（需开启仓库权限）
+    # automerge: true
 
-  - name: Set up Node
-    uses: actions/setup-node@v4.1.0
-    with:
-      node-version: 20
-      cache: 'pnpm'
-
-  # 👇 修复核心：切换镜像，解决证书过期
-  - name: Fix npm registry
-    run: pnpm config set registry https://registry.npmmirror.com/
-
-  # 然后正常安装
-  - name: Install dependencies
-    run: pnpm install
+  # 可选：自动更新 npm/pnpm 依赖（前端项目推荐）
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    # 忽略大版本更新，避免破坏性变更
+    # ignore:
+    #   - dependency-name: "*"
+    #     update-types: ["version-update:semver-major"]
