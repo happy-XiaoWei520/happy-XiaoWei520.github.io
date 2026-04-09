@@ -5,57 +5,46 @@ on:
     branches: [ master ]
   workflow_dispatch:
 
-# 强制所有 JS Action 运行在 Node.js 24，消除弃用警告
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 permissions:
   contents: read
   pages: write
   id-token: write
 
 concurrency:
-  group: "pages"
+  group: pages
   cancel-in-progress: true
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4.2.2
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Setup Node.js 24
-        uses: actions/setup-node@v4.1.0
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
           node-version: 24
 
-      - name: Fix pnpm & install dependencies
+      - name: Install pnpm & dependencies
         run: |
-          npm install -g pnpm@latest
+          npm install -g pnpm
           pnpm config set registry https://registry.npmmirror.com
-          pnpm store prune
-          pnpm install --force --no-frozen-lockfile
+          pnpm install --force --no-lockfile
 
-      - name: Build project
+      - name: Build
         run: pnpm build
 
-      # 👇 关键修复：删除 dist 目录下所有符号链接，再上传
-      - name: Remove symlinks from dist
-        run: find ./dist -type l -delete
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4.4.3
+      # 👇 ✅ ✅ ✅ 官方正确 Pages 上传（不会报符号链接错误）
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          name: github-pages
           path: ./dist
 
   deploy:
     needs: build
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+    name: Deploy
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
