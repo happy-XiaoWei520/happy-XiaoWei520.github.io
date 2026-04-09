@@ -25,17 +25,17 @@ jobs:
         uses: actions/setup-node@v4.1.0
         with:
           node-version: 24  # 已升级到 24，适配 Vercel 和 GitHub 最新要求
-          cache: 'pnpm'
+          cache: 'npm'
 
       # 修复淘宝镜像证书过期
       - name: Fix npm registry
-        run: pnpm config set registry https://registry.npmmirror.com/
+        run: npm config set registry https://registry.npmmirror.com/
 
       - name: Install dependencies
-        run: pnpm install
+        run: npm install
 
       - name: Build project
-        run: pnpm build  # 适配你的前端构建命令
+        run: npm build  # 适配你的前端构建命令
 
       # 上传产物（已升级到 v4，解决弃用报错）
       - name: Upload artifact
