@@ -5,3 +5,19 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+steps:
+  - uses: actions/checkout@v4.2.2
+
+  - name: Set up Node
+    uses: actions/setup-node@v4.1.0
+    with:
+      node-version: 20
+      cache: 'pnpm'
+
+  # 👇 修复核心：切换镜像，解决证书过期
+  - name: Fix npm registry
+    run: pnpm config set registry https://registry.npmmirror.com/
+
+  # 然后正常安装
+  - name: Install dependencies
+    run: pnpm install
