@@ -2,8 +2,12 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [ master ]  # 你的主分支是 master，已适配
+    branches: [ master ]
   workflow_dispatch:
+
+# 强制所有 JS Action 运行在 Node.js 24，消除弃用警告
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 permissions:
   contents: read
@@ -19,30 +23,34 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4.2.2  # 已升级 Node.js 24 兼容版
+        uses: actions/checkout@v4.2.2
 
-      - name: Setup Node.js
+      - name: Setup Node.js 24
         uses: actions/setup-node@v4.1.0
         with:
-          node-version: 24  # 已升级到 24，适配 Vercel 和 GitHub 最新要求
-          cache: 'npm'
+          node-version: 24
+          # ❌ 关键修复：删除 cache: 'pnpm'，避免锁文件校验失败
+          # cache: 'pnpm'
 
-      # 修复淘宝镜像证书过期
-      - name: Fix npm registry
-        run: npm config set registry https://registry.npmmirror.com/
-
-      - name: Install dependencies
-        run: npm install
+      # 修复镜像 + 彻底解决 pnpm 安装问题
+      - name: Fix pnpm & install dependencies
+        run: |
+          # 全局安装最新版 pnpm
+          npm install -g pnpm@latest
+          # 切换到国内可用镜像，解决证书过期
+          pnpm config set registry https://registry.npmmirror.com
+          # 清理缓存 + 强制安装
+          pnpm store prune
+          pnpm install --force --no-frozen-lockfile
 
       - name: Build project
-        run: npm build  # 适配你的前端构建命令
+        run: pnpm build
 
-      # 上传产物（已升级到 v4，解决弃用报错）
       - name: Upload artifact
         uses: actions/upload-artifact@v4.4.3
         with:
           name: github-pages
-          path: ./dist  # Vue/Vite/React 构建输出目录
+          path: ./dist
 
   deploy:
     needs: build
@@ -53,4 +61,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4  # 已升级 Node.js 24 兼容版
+        uses: actions/deploy-pages@v4
