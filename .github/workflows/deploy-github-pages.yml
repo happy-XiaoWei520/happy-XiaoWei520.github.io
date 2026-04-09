@@ -1,18 +1,15 @@
 name: Deploy to GitHub Pages
 
-# 触发条件：推送到 main 分支，或手动触发
 on:
   push:
-    branches: [ main ]
+    branches: [ master ]  # 你的主分支是 master，已适配
   workflow_dispatch:
 
-# 必须的权限配置（GitHub Pages 部署核心）
 permissions:
   contents: read
   pages: write
   id-token: write
 
-# 并发控制：避免多次部署冲突
 concurrency:
   group: "pages"
   cancel-in-progress: true
@@ -21,37 +18,32 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      # 1. 拉取代码（已升级到 Node.js 24 兼容版）
       - name: Checkout code
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@v4.2.2  # 已升级 Node.js 24 兼容版
 
-      # 2. 配置 Node.js 环境
       - name: Setup Node.js
         uses: actions/setup-node@v4.1.0
         with:
-          node-version: 20
-          cache: 'pnpm' # 适配你的 pnpm 包管理器
+          node-version: 24  # 已升级到 24，适配 Vercel 和 GitHub 最新要求
+          cache: 'pnpm'
 
-      # 3. 修复淘宝镜像证书过期问题（国内必加）
+      # 修复淘宝镜像证书过期
       - name: Fix npm registry
         run: pnpm config set registry https://registry.npmmirror.com/
 
-      # 4. 安装依赖
       - name: Install dependencies
         run: pnpm install
 
-      # 5. 构建项目（根据你的项目调整命令）
       - name: Build project
-        run: pnpm build
+        run: pnpm build  # 适配你的前端构建命令
 
-      # 6. 上传构建产物（已升级到 v4，解决弃用报错）
+      # 上传产物（已升级到 v4，解决弃用报错）
       - name: Upload artifact
         uses: actions/upload-artifact@v4.4.3
         with:
           name: github-pages
-          path: ./dist # Vue/Vite/React 构建输出目录，根据项目调整
+          path: ./dist  # Vue/Vite/React 构建输出目录
 
-  # 部署任务
   deploy:
     needs: build
     runs-on: ubuntu-latest
@@ -59,7 +51,6 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      # 7. 部署到 GitHub Pages（已升级到 v4）
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v4  # 已升级 Node.js 24 兼容版
