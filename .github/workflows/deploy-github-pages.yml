@@ -29,22 +29,20 @@ jobs:
         uses: actions/setup-node@v4.1.0
         with:
           node-version: 24
-          # ❌ 关键修复：删除 cache: 'pnpm'，避免锁文件校验失败
-          # cache: 'pnpm'
 
-      # 修复镜像 + 彻底解决 pnpm 安装问题
       - name: Fix pnpm & install dependencies
         run: |
-          # 全局安装最新版 pnpm
           npm install -g pnpm@latest
-          # 切换到国内可用镜像，解决证书过期
           pnpm config set registry https://registry.npmmirror.com
-          # 清理缓存 + 强制安装
           pnpm store prune
           pnpm install --force --no-frozen-lockfile
 
       - name: Build project
         run: pnpm build
+
+      # 👇 关键修复：删除 dist 目录下所有符号链接，再上传
+      - name: Remove symlinks from dist
+        run: find ./dist -type l -delete
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4.4.3
